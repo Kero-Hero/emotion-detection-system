@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时情绪识别系统 - 演示版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .demo-notice {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .video-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .demo-image {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .face-emoji {
+            font-size: 4em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .emotion-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .emotion-panel h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .emotion-bar {
+            margin-bottom: 15px;
+        }
+
+        .emotion-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .emotion-progress {
+            background: #f0f0f0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .emotion-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        .history-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            grid-column: 1 / -1;
+        }
+
+        .history-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .history-chart {
+            width: 100%;
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .features {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            grid-column: 1 / -1;
+            margin-top: 30px;
+        }
+
+        .features h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-item {
+            padding: 20px;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 实时情绪识别系统</h1>
+            <p>基于人工智能的实时面部情绪检测与分析</p>
+        </div>
+
+        <div class="demo-notice">
+            🚀 这是演示版本 - 显示模拟的情绪识别数据
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <h3>📹 情绪检测区域</h3>
+                <div class="demo-image">
+                    <div>
+                        <div class="face-emoji" id="faceEmoji">😊</div>
+                        <div>演示模式</div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="btn" onclick="startDemo()">🎬 开始演示</button>
+                    <button class="btn" onclick="pauseDemo()">⏸️ 暂停</button>
+                    <a href="https://github.com" class="btn">📂 查看源码</a>
+                </div>
+            </div>
+
+            <div class="emotion-panel">
+                <h3>📊 实时情绪分析</h3>
+                <div id="emotionBars">
+                    <!-- 情绪条将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <h3>📈 情绪变化历史</h3>
+            <div class="history-chart">
+                📊 实时情绪数据图表 (演示模式)
+            </div>
+        </div>
+
+        <div class="features">
+            <h3>✨ 系统特点</h3>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">🎥</div>
+                    <h4>实时检测</h4>
+                    <p>支持摄像头实时情绪识别</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🧠</div>
+                    <h4>AI算法</h4>
+                    <p>基于深度学习的情绪分析</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📱</div>
+                    <h4>响应式界面</h4>
+                    <p>适配各种设备屏幕</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <h4>数据可视化</h4>
+                    <p>直观的图表展示</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let updateInterval;
+
+        const emotionEmojis = {
+            'happy': '😊',
+            'sad': '😢',
+            'angry': '😠',
+            'surprise': '😲',
+            'fear': '😨',
+            'disgust': '🤢',
+            'neutral': '😐'
+        };
+
+        const emotionColors = {
+            'happy': '#FFD93D',
+            'sad': '#6BCF7F',
+            'angry': '#FF6B6B',
+            'surprise': '#4ECDC4',
+            'fear': '#45B7D1',
+            'disgust': '#96CEB4',
+            'neutral': '#FFEAA7'
+        };
+
+        function startDemo() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            updateInterval = setInterval(updateEmotionData, 2000);
+            console.log('演示开始');
+        }
+
+        function pauseDemo() {
+            isRunning = false;
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            console.log('演示暂停');
+        }
+
+        function updateEmotionData() {
+            fetch('/emotion_data')
+                .then(response => response.json())
+                .then(data => {
+                    updateEmotionBars(data.current_emotions, data.emotion_labels);
+                    updateFaceEmoji(data.current_emotions);
+                })
+                .catch(error => {
+                    console.error('获取数据失败:', error);
+                });
+        }
+
+        function updateEmotionBars(emotions, labels) {
+            const container = document.getElementById('emotionBars');
+            container.innerHTML = '';
+
+            for (const [emotion, probability] of Object.entries(emotions)) {
+                const barDiv = document.createElement('div');
+                barDiv.className = 'emotion-bar';
+                
+                const percentage = (probability * 100).toFixed(1);
+                const label = labels[emotion] || emotion;
+                
+                barDiv.innerHTML = `
+                    <div class="emotion-label">
+                        <span>${label}</span>
+                        <span>${percentage}%</span>
+                    </div>
+                    <div class="emotion-progress">
+                        <div class="emotion-fill" style="width: ${percentage}%; background: ${emotionColors[emotion] || '#667eea'}"></div>
+                    </div>
+                `;
+                
+                container.appendChild(barDiv);
+            }
+        }
+
+        function updateFaceEmoji(emotions) {
+            // 找到概率最高的情绪
+            let maxEmotion = 'neutral';
+            let maxProbability = 0;
+            
+            for (const [emotion, probability] of Object.entries(emotions)) {
+                if (probability > maxProbability) {
+                    maxProbability = probability;
+                    maxEmotion = emotion;
+                }
+            }
+            
+            const faceEmoji = document.getElementById('faceEmoji');
+            faceEmoji.textContent = emotionEmojis[maxEmotion] || '😐';
+        }
+
+        // 页面加载时自动开始演示
+        document.addEventListener('DOMContentLoaded', function() {
+            startDemo();
+        });
+    </script>
+</body>
+</html>

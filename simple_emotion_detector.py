@@ -4,6 +4,7 @@ from flask import Flask, render_template, Response, jsonify
 import threading
 import time
 import json
+import os
 from datetime import datetime
 
 class SimpleEmotionDetector:
@@ -228,9 +229,14 @@ def emotion_data():
 
 if __name__ == '__main__':
     try:
+        port = int(os.environ.get('PORT', 5000))
         print("正在启动简化版情绪识别系统...")
-        print("请打开浏览器访问: http://localhost:5000")
-        app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
+        if os.environ.get('PORT'):
+            print(f"部署模式，端口: {port}")
+            app.run(host='0.0.0.0', port=port, threaded=True)
+        else:
+            print("请打开浏览器访问: http://localhost:5000")
+            app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
     except KeyboardInterrupt:
         print("\n正在关闭系统...")
         detector.stop_camera()
