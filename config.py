@@ -57,5 +57,5 @@ EMOTIONS = {
 }
 
 # UI设置
-UI_UPDATE_INTERVAL = 1000  # 毫秒
+UI_UPDATE_INTERVAL = 100  # 毫秒
 CHART_MAX_POINTS = 50  # 图表最大数据点数
