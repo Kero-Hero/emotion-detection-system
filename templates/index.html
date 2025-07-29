@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时情绪识别系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .video-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .video-container {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #videoStream {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .video-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            background: #e9ecef;
+            border-radius: 10px;
+            border: 2px dashed #adb5bd;
+        }
+
+        .placeholder-content {
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .placeholder-content i {
+            font-size: 4em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #218838, #1ea085);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #e83e8c);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(45deg, #c82333, #d91a72);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .stats-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .emotion-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .emotion-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .emotion-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+
+        .emotion-info {
+            flex: 1;
+        }
+
+        .emotion-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .emotion-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .emotion-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .emotion-value {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-left: 10px;
+            min-width: 50px;
+        }
+
+        .history-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .history-time {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .history-emotions {
+            color: #6c757d;
+        }
+
+        .status {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.inactive {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* 情绪颜色映射 */
+        .emotion-angry { background-color: #ff4757; }
+        .emotion-disgust { background-color: #2ed573; }
+        .emotion-fear { background-color: #a55eea; }
+        .emotion-happy { background-color: #ffa502; }
+        .emotion-sad { background-color: #3742fa; }
+        .emotion-surprise { background-color: #ff6b6b; }
+        .emotion-neutral { background-color: #747d8c; }
+    </style>
+    <!-- 添加Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-video"></i> 实时情绪识别系统</h1>
+            <p>基于人工智能的面部情绪检测与分析</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 视频区域 -->
+            <div class="video-section">
+                <div id="status" class="status inactive">
+                    <i class="fas fa-circle"></i> 摄像头未启动
+                </div>
+
+                <div class="video-container">
+                    <img id="videoStream" alt="视频流">
+                    <div id="videoPlaceholder" class="video-placeholder">
+                        <div class="placeholder-content">
+                            <i class="fas fa-camera"></i>
+                            <h3>点击"启动摄像头"开始检测</h3>
+                            <p>系统将自动识别您的面部表情和情绪状态</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>正在启动摄像头...</p>
+                </div>
+
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-primary">
+                        <i class="fas fa-play"></i> 启动摄像头
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger" disabled>
+                        <i class="fas fa-stop"></i> 停止摄像头
+                    </button>
+                </div>
+            </div>
+
+            <!-- 统计区域 -->
+            <div class="stats-section">
+                <!-- 当前情绪 -->
+                <div class="card">
+                    <h3><i class="fas fa-chart-bar"></i> 当前情绪分析</h3>
+                    <div id="currentEmotions">
+                        <div class="emotion-item">
+                            <div class="emotion-icon emotion-neutral">
+                                <i class="fas fa-face-meh"></i>
+                            </div>
+                            <div class="emotion-info">
+                                <div class="emotion-name">等待检测...</div>
+                                <div class="emotion-bar">
+                                    <div class="emotion-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="emotion-value">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 情绪历史 -->
+                <div class="card">
+                    <h3><i class="fas fa-history"></i> 情绪历史</h3>
+                    <div id="emotionHistory">
+                        <div class="history-item">
+                            <div class="history-time">等待数据...</div>
+                            <div class="history-emotions">暂无情绪检测记录</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        
+        // 情绪图标映射
+        const emotionIcons = {
+            'angry': 'fa-angry',
+            'disgust': 'fa-grimace',
+            'fear': 'fa-scared',
+            'happy': 'fa-smile',
+            'sad': 'fa-sad-tear',
+            'surprise': 'fa-surprise',
+            'neutral': 'fa-meh'
+        };
+
+        // 情绪中文标签映射
+        const emotionLabels = {
+            'angry': '愤怒',
+            'disgust': '厌恶',
+            'fear': '恐惧',
+            'happy': '开心',
+            'sad': '悲伤',
+            'surprise': '惊讶',
+            'neutral': '平静'
+        };
+
+        // DOM元素
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const videoStream = document.getElementById('videoStream');
+        const videoPlaceholder = document.getElementById('videoPlaceholder');
+        const status = document.getElementById('status');
+        const loading = document.getElementById('loading');
+        const currentEmotions = document.getElementById('currentEmotions');
+        const emotionHistory = document.getElementById('emotionHistory');
+
+        // 启动摄像头
+        startBtn.addEventListener('click', async () => {
+            loading.style.display = 'block';
+            startBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/start_camera');
+                const data = await response.json();
+                
+                if (data.success) {
+                    isRunning = true;
+                    videoStream.src = '/video_feed';
+                    videoStream.style.display = 'block';
+                    videoPlaceholder.style.display = 'none';
+                    
+                    status.className = 'status active';
+                    status.innerHTML = '<i class="fas fa-circle"></i> 摄像头运行中';
+                    
+                    stopBtn.disabled = false;
+                    
+                    // 开始获取情绪数据
+                    startEmotionUpdates();
+                } else {
+                    alert('摄像头启动失败，请检查摄像头连接');
+                    startBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('启动摄像头失败:', error);
+                alert('连接服务器失败，请检查服务器状态');
+                startBtn.disabled = false;
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        // 停止摄像头
+        stopBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/stop_camera');
+                const data = await response.json();
+                
+                if (data.success) {
+                    isRunning = false;
+                    videoStream.style.display = 'none';
+                    videoPlaceholder.style.display = 'flex';
+                    
+                    status.className = 'status inactive';
+                    status.innerHTML = '<i class="fas fa-circle"></i> 摄像头未启动';
+                    
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                    
+                    // 清空情绪数据显示
+                    resetEmotionDisplay();
+                }
+            } catch (error) {
+                console.error('停止摄像头失败:', error);
+                alert('停止摄像头失败');
+            }
+        });
+
+        // 开始情绪数据更新
+        function startEmotionUpdates() {
+            const updateInterval = setInterval(async () => {
+                if (!isRunning) {
+                    clearInterval(updateInterval);
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/emotion_data');
+                    const data = await response.json();
+                    updateEmotionDisplay(data);
+                } catch (error) {
+                    console.error('获取情绪数据失败:', error);
+                }
+            }, 1000); // 每秒更新一次
+        }
+
+        // 更新情绪显示
+        function updateEmotionDisplay(data) {
+            // 更新当前情绪
+            if (data.current_emotions && Object.keys(data.current_emotions).length > 0) {
+                const emotionsHTML = Object.entries(data.current_emotions)
+                    .sort(([,a], [,b]) => b - a) // 按置信度排序
+                    .map(([emotion, confidence]) => {
+                        const percentage = (confidence * 100).toFixed(1);
+                        const iconClass = emotionIcons[emotion] || 'fa-meh';
+                        const label = emotionLabels[emotion] || emotion;
+                        
+                        return `
+                            <div class="emotion-item">
+                                <div class="emotion-icon emotion-${emotion}">
+                                    <i class="fas ${iconClass}"></i>
+                                </div>
+                                <div class="emotion-info">
+                                    <div class="emotion-name">${label}</div>
+                                    <div class="emotion-bar">
+                                        <div class="emotion-fill" style="width: ${percentage}%; background: var(--emotion-${emotion}-color, #667eea);"></div>
+                                    </div>
+                                </div>
+                                <div class="emotion-value">${percentage}%</div>
+                            </div>
+                        `;
+                    }).join('');
+                
+                currentEmotions.innerHTML = emotionsHTML;
+            }
+
+            // 更新情绪历史
+            if (data.emotion_history && data.emotion_history.length > 0) {
+                const historyHTML = data.emotion_history
+                    .slice(-5) // 显示最近5条记录
+                    .reverse() // 最新的在上面
+                    .map(record => {
+                        const dominantEmotion = Object.entries(record.emotions)
+                            .reduce((a, b) => record.emotions[a[0]] > record.emotions[b[0]] ? a : b);
+                        
+                        const emotionLabel = emotionLabels[dominantEmotion[0]] || dominantEmotion[0];
+                        const confidence = (dominantEmotion[1] * 100).toFixed(1);
+                        
+                        return `
+                            <div class="history-item">
+                                <div class="history-time">${record.timestamp}</div>
+                                <div class="history-emotions">主要情绪: ${emotionLabel} (${confidence}%)</div>
+                            </div>
+                        `;
+                    }).join('');
+                
+                emotionHistory.innerHTML = historyHTML;
+            }
+        }
+
+        // 重置情绪显示
+        function resetEmotionDisplay() {
+            currentEmotions.innerHTML = `
+                <div class="emotion-item">
+                    <div class="emotion-icon emotion-neutral">
+                        <i class="fas fa-meh"></i>
+                    </div>
+                    <div class="emotion-info">
+                        <div class="emotion-name">等待检测...</div>
+                        <div class="emotion-bar">
+                            <div class="emotion-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <div class="emotion-value">0%</div>
+                </div>
+            `;
+            
+            emotionHistory.innerHTML = `
+                <div class="history-item">
+                    <div class="history-time">等待数据...</div>
+                    <div class="history-emotions">暂无情绪检测记录</div>
+                </div>
+            `;
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('情绪识别系统界面加载完成');
+        });
+
+        // 页面卸载时停止摄像头
+        window.addEventListener('beforeunload', () => {
+            if (isRunning) {
+                fetch('/stop_camera');
+            }
+        });
+    </script>
+</body>
+</html>
