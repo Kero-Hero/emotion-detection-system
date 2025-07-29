@@ -33,7 +33,7 @@ jobs:
           cp README.md _site/
           
           # 创建一个简单的index页面用于GitHub Pages
-          cat > _site/demo.html << 'EOF'
+          cat > _site/index.html << 'EOF'
           <!DOCTYPE html>
           <html lang="zh-CN">
           <head>
@@ -106,12 +106,35 @@ jobs:
                       text-align: left;
                       overflow-x: auto;
                   }
+                  .demo-section {
+                      margin: 30px 0;
+                      padding: 30px;
+                      background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+                      border-radius: 15px;
+                  }
+                  .status {
+                      background: #28a745;
+                      color: white;
+                      padding: 10px 20px;
+                      border-radius: 25px;
+                      font-weight: bold;
+                      margin: 10px 0;
+                      display: inline-block;
+                  }
               </style>
           </head>
           <body>
               <div class="container">
                   <h1>🎭 实时情绪识别系统</h1>
+                  <div class="status">✅ 部署成功！</div>
                   <p>基于Python、OpenCV和深度学习的实时人脸情绪检测系统</p>
+                  
+                  <div class="demo-section">
+                      <h3>🚀 在线演示</h3>
+                      <p>本系统已成功部署到GitHub Pages！</p>
+                      <a href="./demo.html" class="btn">🎮 体验在线演示</a>
+                      <a href="./index.html" class="btn">📱 查看完整界面</a>
+                  </div>
                   
                   <div class="features">
                       <h3>✨ 功能特点：</h3>
@@ -124,9 +147,9 @@ jobs:
                       </ul>
                   </div>
                   
-                  <h3>🚀 本地运行：</h3>
+                  <h3>🏠 本地运行：</h3>
                   <div class="code-block">
-                      git clone https://github.com/你的用户名/emotion-detection-system.git<br>
+                      git clone https://github.com/Kero-Hero/emotion-detection-system.git<br>
                       cd emotion-detection-system<br>
                       pip install -r requirements.txt<br>
                       python simple_emotion_detector.py
@@ -134,12 +157,22 @@ jobs:
                   
                   <p>然后访问 <strong>http://localhost:5000</strong></p>
                   
-                  <a href="https://github.com/你的用户名/emotion-detection-system" class="btn">📂 查看源码</a>
-                  <a href="./index.html" class="btn">🎮 查看界面演示</a>
+                  <div style="margin: 30px 0;">
+                      <a href="https://github.com/Kero-Hero/emotion-detection-system" class="btn">📂 查看源码</a>
+                      <a href="./demo.html" class="btn">🎮 在线演示</a>
+                  </div>
+                  
+                  <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                      <h4>📍 访问地址</h4>
+                      <p><strong>GitHub Pages:</strong> https://kero-hero.github.io/emotion-detection-system</p>
+                      <p><strong>项目仓库:</strong> https://github.com/Kero-Hero/emotion-detection-system</p>
+                  </div>
               </div>
           </body>
           </html>
-          EOF
+          
+          # 同时创建demo.html页面
+          cp _site/index.html _site/demo.html
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
